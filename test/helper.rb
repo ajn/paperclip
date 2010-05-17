@@ -1,36 +1,19 @@
 require 'rubygems'
-require 'tempfile'
 require 'test/unit'
-
 require 'shoulda'
+require 'tempfile'
+
+gem 'jferris-mocha'
 require 'mocha'
 
-case ENV['RAILS_VERSION']
-when '2.1' then
-  gem 'activerecord',  '~>2.1.0'
-  gem 'activesupport', '~>2.1.0'
-  gem 'actionpack',    '~>2.1.0'
-when '3.0' then
-  gem 'activerecord',  '~>3.0.0'
-  gem 'activesupport', '~>3.0.0'
-  gem 'actionpack',    '~>3.0.0'
-else
-  gem 'activerecord',  '~>2.3.0'
-  gem 'activesupport', '~>2.3.0'
-  gem 'actionpack',    '~>2.3.0'
-end
+gem 'sqlite3-ruby'
 
 require 'active_record'
-require 'active_record/version'
 require 'active_support'
-require 'action_pack'
-
-puts "Testing againt version #{ActiveRecord::VERSION::STRING}"
-
 begin
   require 'ruby-debug'
-rescue LoadError => e
-  puts "debugger disabled"
+rescue LoadError
+  puts "ruby-debug not loaded"
 end
 
 ROOT = File.join(File.dirname(__FILE__), '..')
@@ -111,38 +94,10 @@ class FakeModel
     @errors ||= []
   end
 
-  def run_paperclip_callbacks name, *args
+  def run_callbacks name, *args
   end
-
 end
 
 def attachment options
   Paperclip::Attachment.new(:avatar, FakeModel.new, options)
-end
-
-def silence_warnings
-  old_verbose, $VERBOSE = $VERBOSE, nil
-  yield
-ensure
-  $VERBOSE = old_verbose
-end
-
-def should_accept_dummy_class
-  should "accept the class" do
-    assert_accepts @matcher, @dummy_class
-  end
-
-  should "accept an instance of that class" do
-    assert_accepts @matcher, @dummy_class.new
-  end
-end
-
-def should_reject_dummy_class
-  should "reject the class" do
-    assert_rejects @matcher, @dummy_class
-  end
-
-  should "reject an instance of that class" do
-    assert_rejects @matcher, @dummy_class.new
-  end
 end

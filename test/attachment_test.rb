@@ -106,7 +106,7 @@ class AttachmentTest < Test::Unit::TestCase
       @dummy.stubs(:id).returns(@id)
       @file = StringIO.new(".")
       @dummy.avatar = @file
-      Rails.stubs(:env).returns(@rails_env)
+      Rails = stub('Rails', :root => @rails_env)
     end
 
     should "return the proper path" do
@@ -362,7 +362,7 @@ class AttachmentTest < Test::Unit::TestCase
 
   context "Assigning an attachment with post_process hooks" do
     setup do
-      rebuild_class :styles => { :something => "100x100#" }
+      rebuild_model :styles => { :something => "100x100#" }
       Dummy.class_eval do
         before_avatar_post_process :do_before_avatar
         after_avatar_post_process :do_after_avatar
@@ -402,16 +402,16 @@ class AttachmentTest < Test::Unit::TestCase
       @dummy.expects(:do_before_avatar).never
       @dummy.expects(:do_after_avatar).never
       @dummy.expects(:do_before_all).with().returns(false)
-      @dummy.expects(:do_after_all)
+      @dummy.expects(:do_after_all).never
       Paperclip::Thumbnail.expects(:make).never
       @dummy.avatar = @file
     end
 
     should "cancel the processing if a before_avatar_post_process returns false" do
       @dummy.expects(:do_before_avatar).with().returns(false)
-      @dummy.expects(:do_after_avatar)
+      @dummy.expects(:do_after_avatar).never
       @dummy.expects(:do_before_all).with().returns(true)
-      @dummy.expects(:do_after_all)
+      @dummy.expects(:do_after_all).never
       Paperclip::Thumbnail.expects(:make).never
       @dummy.avatar = @file
     end
@@ -421,11 +421,15 @@ class AttachmentTest < Test::Unit::TestCase
     setup do
       rebuild_model :styles => { :something => "100x100#" }
       @file  = StringIO.new(".")
-      @file.stubs(:original_filename).returns("5k.png\n\n")
-      @file.stubs(:content_type).returns("image/png\n\n")
+      @file.expects(:original_filename).returns("5k.png\n\n")
+      @file.expects(:content_type).returns("image/png\n\n")
       @file.stubs(:to_tempfile).returns(@file)
       @dummy = Dummy.new
       Paperclip::Thumbnail.expects(:make).returns(@file)
+      @dummy.expects(:run_callbacks).with(:before_avatar_post_process, {:original => @file})
+      @dummy.expects(:run_callbacks).with(:before_post_process, {:original => @file})
+      @dummy.expects(:run_callbacks).with(:after_avatar_post_process, {:original => @file, :something => @file})
+      @dummy.expects(:run_callbacks).with(:after_post_process, {:original => @file, :something => @file})
       @attachment = @dummy.avatar
       @dummy.avatar = @file
     end

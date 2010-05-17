@@ -1,12 +1,6 @@
 module Paperclip
   module Shoulda
     module Matchers
-      # Ensures that the given instance or class validates the presence of the
-      # given attachment.
-      #
-      # describe User do
-      #   it { should validate_attachment_presence(:avatar) }
-      # end
       def validate_attachment_presence name
         ValidateAttachmentPresenceMatcher.new(name)
       end
@@ -18,7 +12,6 @@ module Paperclip
 
         def matches? subject
           @subject = subject
-          @subject = @subject.class unless Class === @subject
           error_when_not_valid? && no_error_when_valid?
         end
 
@@ -39,14 +32,14 @@ module Paperclip
         def error_when_not_valid?
           (subject = @subject.new).send(@attachment_name).assign(nil)
           subject.valid?
-          not subject.errors[:"#{@attachment_name}_file_name"].blank?
+          not subject.errors.on(:"#{@attachment_name}_file_name").blank?
         end
 
         def no_error_when_valid?
           @file = StringIO.new(".")
           (subject = @subject.new).send(@attachment_name).assign(@file)
           subject.valid?
-          subject.errors[:"#{@attachment_name}_file_name"].blank?
+          subject.errors.on(:"#{@attachment_name}_file_name").blank?
         end
       end
     end
